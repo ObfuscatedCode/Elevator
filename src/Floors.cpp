@@ -91,19 +91,19 @@ Floors::FloorNumber Floors::GetNextStop(const FloorNumber currentFloor, Directio
 
 Floors::FloorNumber Floors::Search(const FloorNumber startFloor, const Direction direction)
 {
-  if (!IsValid(startFloor) || direction != Direction::Up && direction != Direction::Down)
+  if (!IsValid(startFloor) || (direction != Direction::Up && direction != Direction::Down))
     return InvalidFloor;
 
   if(direction == Direction::Up)
   {
   for (FloorNumber floor = startFloor; IsValid(floor); ++floor)
-    if (m_stops[floor].first && m_stops[floor].second == Direction::Up || m_stops[floor].second == Direction::Both)
+    if (m_stops[floor].first && (m_stops[floor].second == Direction::Up || m_stops[floor].second == Direction::Both))
       return floor;
   }
   else if (direction == Direction::Down)
   {
     for (FloorNumber floor = startFloor; IsValid(floor); --floor)
-      if (m_stops[floor].first && m_stops[floor].second == Direction::Down || m_stops[floor].second == Direction::Both)
+      if (m_stops[floor].first && (m_stops[floor].second == Direction::Down || m_stops[floor].second == Direction::Both))
         return floor;
   }
 

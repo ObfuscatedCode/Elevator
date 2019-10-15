@@ -4,10 +4,11 @@
     {
       "label": "Build Elevator",
       "type": "shell",
-      "command": "g++.exe",
+      "command": "g++",
       "args": [
         "-g",
-        //"-Wall",
+        "-pthread",
+        "-Wall",
         "-o",
         "-v",
         "src/Elevator.cpp",
