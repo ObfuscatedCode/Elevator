@@ -27,7 +27,7 @@ namespace Configuration
     /**
      * \brief Total number of floors.
      */
-    constexpr unsigned int NumberOfFloors = 10;
+    constexpr unsigned int NumberOfFloors = 5;
   }
 
   namespace CallsGenerator
@@ -50,17 +50,17 @@ namespace Configuration
     /**
      * \brief [For random generator] Number of random calls to generate.
      */    
-    constexpr unsigned int NumberOfCalls = 100; // EndlessCalls;
+    constexpr unsigned int NumberOfCalls = 5; // EndlessCalls;
 
     /**
      * \brief Minimum delay (ms) between random calls.
      */
-    constexpr auto MinDelayBetweenCalls = std::chrono::milliseconds(1ms).count(); // std::chrono::milliseconds(3s).count();
+    constexpr auto MinDelayBetweenCalls = std::chrono::milliseconds(3s).count();
 
     /**
      * \brief Maximum delay (ms) between random calls.
      */
-    constexpr auto MaxDelayBetweenCalls = std::chrono::milliseconds(2s).count(); // std::chrono::milliseconds(10s).count();
+    constexpr auto MaxDelayBetweenCalls = std::chrono::milliseconds(10s).count();
   }
 
   namespace Elevator
@@ -68,7 +68,7 @@ namespace Configuration
     /**
      * \brief Time to reach the next floor.
      */
-    constexpr std::chrono::milliseconds TimeToReachTheNextFloor = 5ms; // 2s;
+    constexpr std::chrono::milliseconds TimeToReachTheNextFloor = 2s;
 
     /**
      * \brief Time for people enter and exit in the elevator
@@ -78,7 +78,7 @@ namespace Configuration
 
   namespace Log
   {
-    constexpr ILog::TraceLevel TraceLevel = ILog::TraceLevel::Info;
+    constexpr ILog::TraceLevel TraceLevel = ILog::TraceLevel::Verbose;
 
     constexpr ILog::LogType DefaultLogType = ILog::LogType::Screen;
   }
