@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: LogBase.h
+* Description: Implements the log service basic logic.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include <mutex>

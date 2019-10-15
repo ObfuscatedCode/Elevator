@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: Floors.h
+* Description: Implements the building floors.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include "Configuration.h"

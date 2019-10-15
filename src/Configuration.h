@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: Configuration.h
+* Description: Simulation parameters.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include <chrono>

@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: Elevator.h
+* Description: Implements the elevator logic.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include <thread>

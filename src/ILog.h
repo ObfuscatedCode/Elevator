@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: ILog.h
+* Description: Interface of the log service.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include <string>

@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: LogToScreen.h
+* Description: Implements a simple log service that use screen to show messages.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include "LogBase.h"

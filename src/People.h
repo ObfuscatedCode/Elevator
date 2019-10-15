@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: People.h
+* Description: Collection of people calls.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include <list>

@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: Log.h
+* Description: Implements the log service.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include "ILog.h"

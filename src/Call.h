@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: Call.h
+* Description: Implements the people elevator calls.
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include "Floors.h"

@@ -1,3 +1,10 @@
+/**********************************************************************************
+*        File: Managment.h
+* Description: Elevator(s) managmanent, manage the calls assignation. 
+*      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
+*       Notes:
+**********************************************************************************/
+
 #pragma once
 
 #include "Log.h"
