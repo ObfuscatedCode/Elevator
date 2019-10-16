@@ -43,17 +43,17 @@ void PeopleCallsGenerator::StartFixed()
 
 void PeopleCallsGenerator::Shutdown()
 {
+  if (m_shutdownRequested || m_thread == nullptr)
+    return;
+  
   m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
 
-  if (m_working && m_thread)
-  {
-    m_shutdownRequested = true;
+  m_shutdownRequested = true;
 
-    if (m_thread->joinable())
-      m_thread->join();
+  if (m_thread->joinable())
+    m_thread->join();
 
-    m_thread.reset();
-  }
+  m_thread.reset();  
 }
 
 void PeopleCallsGenerator::Random(const unsigned int numberOfCalls)
