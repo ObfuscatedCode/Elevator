@@ -20,7 +20,7 @@
         "src/Management.cpp",
         "src/People.cpp",
         "src/PeopleCallsGenerator.cpp",
-        "-oElevator.exe"
+        "-oElevator"
       ],
       "group": {
         "kind": "build",

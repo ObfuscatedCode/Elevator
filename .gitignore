@@ -35,4 +35,13 @@
 *.db 
 *.suo 
 *.ipch
+*.pdb
+*.ipdb
+*.ilk
+*.log
+*.tlog
+vc141.*
+*.opendb
+
+
 

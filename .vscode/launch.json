@@ -9,14 +9,14 @@
         "name": "(gdb) Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceRoot}/Elevator.exe",
+        "program": "${workspaceRoot}/Elevator",
         "args": [],
         "stopAtEntry": true,
         "cwd": "${workspaceRoot}",
         "environment": [],
         "externalConsole": true,
         "MIMode": "gdb",
-        "miDebuggerPath": "gdb",
+        "miDebuggerPath": "gdb.exe",
         "setupCommands": [
           {
             "description": "Enable pretty-printing for gdb",
