@@ -54,6 +54,8 @@ void PeopleCallsGenerator::Shutdown()
     m_thread->join();
 
   m_thread.reset();  
+
+  m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
 }
 
 void PeopleCallsGenerator::Random(const unsigned int numberOfCalls)
@@ -102,6 +104,7 @@ void PeopleCallsGenerator::Random(const unsigned int numberOfCalls)
   } while (!m_shutdownRequested);
 
   m_working = false;
+  m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
 }
 
 void PeopleCallsGenerator::Fixed()

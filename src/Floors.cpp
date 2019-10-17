@@ -72,7 +72,7 @@ Floors::FloorNumber Floors::GetNextStop(const FloorNumber currentFloor, Directio
 
   // One more search attempt for every direction, changing the search start floor:
   // top floor for down and bottom floor for up
-  for (auto attempt = 0U; attempt < 2U; ++attempt) 
+  for (auto attempt = 0U; attempt < 2U; ++attempt) // 2U = two directions
   {
     if (!IsValid(nextStop))
     {

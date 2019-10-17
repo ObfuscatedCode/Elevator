@@ -31,6 +31,8 @@ void Management::Shutdown()
     elevator->ShutDown();
 
   m_elevators.clear();
+
+  m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
 }
 
 bool Management::AssignCall(std::shared_ptr<Call>& call)

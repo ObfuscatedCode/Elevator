@@ -88,8 +88,8 @@ void Elevator::ElevatorThreadFunction()
   }
   while (!m_shutdownRequested);
 
-  m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
   m_working = false;
+  m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
 }
 
 bool Elevator::OpenDoors()
@@ -150,7 +150,7 @@ void Elevator::PeopleEnterAndExit()
  */
 void Elevator::RestoreDestinationStops()
 {
-  // This is a quite counter-intuitive workaround.
+  // This is a workaround.
   // When a call is assigned the stops are set in the floor array and 
   // cleared once reached the start or destination floor; this mechanism can fail in some cases:
   // imagine that the elevator is managing a first call from floor 6 to 1
@@ -158,10 +158,11 @@ void Elevator::RestoreDestinationStops()
   // once reached the floor 1 the stop is cleared, but the second call is still to be managed,
   // so in the next step the elevator go to floor 8, but the destination has been lost and 
   // people remain in the elevator.
+  // An alternative solution could be to implement a sort of reference counting of the floors stops
+  // but this is the simplest solution.
 
   // Refresh the stops based on the people inside
-  //People::LockInScope lock(m_people);
-  for (auto& person : m_people.GetList()) // TODO: make sure the list is not invalidated by possible changes while looping. If yes use 'LockInScope'.
+  for (auto& person : m_people.GetList()) 
   {
     if (person->GetDestinationFloor() != m_currentFloor)
     {
@@ -218,6 +219,8 @@ void Elevator::ShutDown()
     m_thread->join();
 
   m_thread.reset();
+  
+  m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
 }
 
 void Elevator::SetId(std::string id)
