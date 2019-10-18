@@ -9,7 +9,7 @@
         "name": "(gdb) Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceRoot}/Elevator",
+        "program": "${workspaceRoot}/Elevator.run", // change to .exe for Windows
         "args": [],
         "stopAtEntry": true,
         "cwd": "${workspaceRoot}",

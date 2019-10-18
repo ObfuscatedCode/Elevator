@@ -43,5 +43,6 @@
 vc141.*
 *.opendb
 
-
+# Binaries
+Elevator.run
 

@@ -20,7 +20,7 @@
         "src/Management.cpp",
         "src/People.cpp",
         "src/PeopleCallsGenerator.cpp",
-        "-oElevator"
+        "-oElevator.run" // change to .exe for Windows
       ],
       "group": {
         "kind": "build",
