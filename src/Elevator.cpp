@@ -195,7 +195,7 @@ void Elevator::Move(const Floors::FloorNumber requestedFloor)
         --m_currentFloor;
       }
 
-    } while (m_currentFloor != requestedFloor);
+    } while (m_currentFloor != requestedFloor && !m_shutdownRequested);
 
     const std::string message = "Arrived on the floor " + std::to_string(m_currentFloor);
     m_log.Trace(message);
