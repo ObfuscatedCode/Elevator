@@ -71,7 +71,7 @@ private: // Variables
   unsigned int m_id = 0;
 
   std::condition_variable m_condition;
-  std::atomic_bool m_stop = false;
+  std::atomic_bool m_stop{ false };
 
   std::future<bool> m_guardFunctionResult;
 };
