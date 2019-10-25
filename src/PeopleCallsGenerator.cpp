@@ -4,6 +4,7 @@
 #include "Management.h"
 #include "Floors.h"
 #include "People.h"
+#include "Watchdog.h"
 #include "Configuration.h"
 
 #include <random>
@@ -48,10 +49,18 @@ void PeopleCallsGenerator::Shutdown()
   
   m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
 
+  const auto callback = std::bind(
+    [this](const unsigned int) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
+    std::placeholders::_1);
+
+  Watchdog watchdog(0, 60s, callback);
+
   m_shutdownRequested = true;
 
   if (m_thread->joinable())
     m_thread->join();
+
+  watchdog.Stop();
 
   m_thread.reset();  
 

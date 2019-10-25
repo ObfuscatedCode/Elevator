@@ -1,5 +1,6 @@
 #include "Elevator.h"
 #include "Log.h"
+#include "Watchdog.h"
 #include "Configuration.h"
 
 using namespace Configuration::Elevator;
@@ -58,11 +59,11 @@ void Elevator::ElevatorThreadFunction()
     if (!m_people.Empty())
       m_log.Trace("** ERROR ** The elevator is in idle but there are still people inside", Log::TraceLevel::Error);
 
-    std::unique_lock<std::mutex> lock(m_goMutex);
-    m_go.wait(lock);
-
     if (m_shutdownRequested)
       break;
+
+    std::unique_lock<std::mutex> lock(m_goMutex);
+    m_go.wait(lock);
 
     auto nextFloor = m_floors.GetNextStop(m_currentFloor, m_currentDirection);
 
@@ -184,13 +185,13 @@ void Elevator::Move(const Floors::FloorNumber requestedFloor)
 
       if (requestedFloor > m_currentFloor && m_currentFloor < Floors::TopFloor)
       {
-        m_log.Trace("Moving Up",Log::TraceLevel::Verbose);
+        m_log.Trace("Moving Up [" + std::to_string(m_currentFloor) + "]", Log::TraceLevel::Verbose);
         std::this_thread::sleep_for(TimeToReachTheNextFloor); 
-        ++m_currentFloor;
+        ++m_currentFloor;        
       }
       else if (requestedFloor < m_currentFloor && m_currentFloor > 0)
       {
-        m_log.Trace("Moving Down", Log::TraceLevel::Verbose);
+        m_log.Trace("Moving Down [" + std::to_string(m_currentFloor) + "]", Log::TraceLevel::Verbose);
         std::this_thread::sleep_for(TimeToReachTheNextFloor); 
         --m_currentFloor;
       }
@@ -212,11 +213,19 @@ void Elevator::ShutDown()
 
   m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
 
+  const auto callback = std::bind(
+    [this](const unsigned int) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); }, 
+    std::placeholders::_1);
+
+  Watchdog watchdog(0, 60s, callback);
+
   m_shutdownRequested = true;
   m_go.notify_one();
 
   if (m_thread->joinable())
     m_thread->join();
+
+  watchdog.Stop();
 
   m_thread.reset();
   

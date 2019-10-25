@@ -1,5 +1,6 @@
 #include "LogBase.h"
 
+#include "Watchdog.h"
 #include "Configuration.h"
 
 #include <sstream>
@@ -62,8 +63,16 @@ void LogBase::Shutdown()
 
   m_shutdownRequested = true;
 
+  const auto callback = std::bind(
+    [this](const unsigned int) -> void { Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
+    std::placeholders::_1);
+
+  Watchdog watchdog(0, 60s, callback);
+
   if (m_traceThread->joinable())
     m_traceThread->join();
+
+  watchdog.Stop();
 
   m_traceThread.reset();
 }

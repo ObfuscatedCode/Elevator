@@ -68,7 +68,7 @@ private:
   static void Enqueue(const std::shared_ptr<TraceMessage>& traceMessage);
 
   void Start();
-  static void Shutdown();
+  void Shutdown();
 
   static void TraceThreadFunction(LogBase* _this);
 
