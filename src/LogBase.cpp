@@ -64,7 +64,7 @@ void LogBase::Shutdown()
   m_shutdownRequested = true;
 
   const auto callback = std::bind(
-    [this](const unsigned int) -> void { Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
+    [this](const unsigned int) -> void { Trace("** SHUTDOWN IS TAKING TOO LONG **", TraceLevel::Warning); },
     std::placeholders::_1);
 
   Watchdog watchdog(0, 60s, callback);

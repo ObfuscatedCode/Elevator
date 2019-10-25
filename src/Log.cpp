@@ -1,8 +1,6 @@
 #include "Log.h"
 #include "LogToScreen.h"
 
-#include <exception>
-
 Log::Log(const std::string& traceId, const LogType logType)
 {
   m_logType = logType;

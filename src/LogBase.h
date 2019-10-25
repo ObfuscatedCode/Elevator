@@ -12,7 +12,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <thread>
-#include <exception>
 
 #include "ILog.h"
 

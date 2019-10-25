@@ -1,6 +1,6 @@
 /**********************************************************************************
 *        File: PeopleCallsGenerator.h
-* Description: Implements a random and a fixex calls generator.
+* Description: Implements a random and a fixes calls generator.
 *      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
 *       Notes:
 **********************************************************************************/

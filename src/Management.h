@@ -1,6 +1,6 @@
 /**********************************************************************************
-*        File: Managment.h
-* Description: Elevator(s) managmanent, manage the calls assignation. 
+*        File: Management.h
+* Description: Elevator(s) management, manage the calls assignation. 
 *      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
 *       Notes:
 **********************************************************************************/
