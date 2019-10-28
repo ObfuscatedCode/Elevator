@@ -1,5 +1,6 @@
 # elevator
 A simple C++11 elevator(s) text-based simulation 
+[Windows/Linux multiplatform project]
 
 In the 80s an italian magazine called "Commodore Computer Club" launched a competition to create a program that could simulate an elevator on the Commodore 64. I was a child at the time and my computer skills were zero, but I always had the idea of trying it out as a game, so I decided to try again today with C ++ and STL. 
 
