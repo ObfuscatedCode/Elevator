@@ -214,10 +214,10 @@ void Elevator::ShutDown()
   m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
 
   const auto callback = std::bind(
-    [this](const unsigned int) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); }, 
+    [this](const std::string&) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); }, 
     std::placeholders::_1);
 
-  Watchdog watchdog(0, 60s, callback);
+  Watchdog watchdog(m_name, 120s, callback);
 
   m_shutdownRequested = true;
   m_go.notify_one();

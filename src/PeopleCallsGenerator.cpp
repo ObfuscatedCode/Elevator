@@ -50,11 +50,11 @@ void PeopleCallsGenerator::Shutdown()
   m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
 
   const auto callback = std::bind(
-    [this](const unsigned int) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
+    [this](const std::string& id) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
     std::placeholders::_1);
 
-  Watchdog watchdog(0, 60s, callback);
-
+  Watchdog watchdog(m_log.GetTraceId(), 60s, callback);
+  
   m_shutdownRequested = true;
 
   if (m_thread->joinable())
@@ -71,7 +71,7 @@ void PeopleCallsGenerator::Random(const unsigned int numberOfCalls)
 {
   m_working = true;
 
-  std::this_thread::sleep_for(5s); // arbitrary delay before start
+  std::this_thread::sleep_for(2s); // arbitrary delay before start
 
   unsigned int numberOfGeneratedCalls = 0;
 
