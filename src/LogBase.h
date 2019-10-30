@@ -45,14 +45,14 @@ protected:
   };
 
 public:
-  explicit LogBase(const std::string& traceId = "");
+  explicit LogBase(std::string traceId = "");
   virtual ~LogBase();
 
-  LogBase(const LogBase&) = default;
-  LogBase(LogBase&&) = default;
+  LogBase(const LogBase&) = delete;
+  LogBase(LogBase&&) = delete;
 
-  LogBase& operator=(const LogBase&) = default;
-  LogBase& operator=(LogBase&&) = default;
+  LogBase& operator=(const LogBase&) = delete;
+  LogBase& operator=(LogBase&&) = delete;
 
 public: // ILog 
   void Trace(const std::stringstream& message, const TraceLevel level = TraceLevel::Info, const std::string& messageSpecificId = "") const override;
@@ -67,7 +67,7 @@ private:
   static void Enqueue(const std::shared_ptr<TraceMessage>& traceMessage);
 
   void Start();
-  void Shutdown();
+  static void Stop();
 
   static void TraceThreadFunction(LogBase* _this);
 
@@ -85,8 +85,10 @@ private:
 
   static std::unique_ptr<std::thread> m_traceThread;
 
+  static std::atomic_bool m_started;
+
 protected:
-  std::string m_traceId;
+  std::string m_traceId;  
 
   static TraceLevel m_traceLevelFilter;
 };

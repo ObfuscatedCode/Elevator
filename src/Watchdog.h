@@ -15,18 +15,19 @@
 #include <mutex>
 #include <condition_variable>
 #include <future>
+#include <utility>
 
 /**
  * \brief Implements a simple timer which call the passed function if expires.
  */
 class Watchdog final
 {
-public: 
+public:
   /**
    * \brief Default constructor.
    * \param id Id of the watchdog.
    */
-  explicit Watchdog(const std::string& id): m_id(id), m_log(id)
+  explicit Watchdog(std::string id) : m_id(std::move(id))
   {
   }
 
@@ -37,9 +38,9 @@ public:
    * \param timeoutCallback Function called if the timer expires.
    */
   Watchdog(
-    const std::string& id, 
+    std::string id,
     const std::chrono::milliseconds timeout,
-    const std::function<void(const std::string&)>& timeoutCallback): m_id(id), m_log(id)
+    const std::function<void(const std::string&)>& timeoutCallback) : m_id(std::move(id))
   {
     Start(timeout, timeoutCallback);
   }
@@ -55,75 +56,60 @@ public:
   Watchdog(Watchdog&&) = delete;
   Watchdog& operator=(Watchdog&&) = delete;
 
-public: 
+public:
   /**
-   * \brief Start the watchdog. 
+   * \brief Start the watchdog. If is already running will be restarted.
    * \param timeout Milliseconds before the timer expires.
    * \param timeoutCallback Function called if the timer expires.
-   * \return True if the watchdog has been correctly started. If it was already started it will be restarted.
    */
-  bool Start(
+  void Start(
     const std::chrono::milliseconds timeout,
     const std::function<void(const std::string&)>& timeoutCallback)
   {
     if (m_started)
-      Stop();
+      Stop(); // already running: stop and restart
 
     m_guardFunctionResult = std::async(
       std::launch::async,
       bind(&Watchdog::GuardFunction, this, timeout, timeoutCallback));
 
-      m_log.Trace("Watchog started", ILog::TraceLevel::Debug);
-
-    return true;
+    m_started = true;
   }
-    
+
   /**
    * \brief Stop the watchdog.
-   * \return True if the watchdog has been correctly stopped. 
+   * \return True if the watchdog has been correctly stopped.
    */
-  bool Stop()
+  void Stop()
   {
-    m_log.Trace("Watchog stop requested...", ILog::TraceLevel::Debug);
+    if (!m_started)
+      return; // not started
 
     m_stopped = true;
     m_condition.notify_one();
+
     m_guardFunctionResult.wait();
 
-    m_log.Trace("Watchog stopped", ILog::TraceLevel::Debug);
-
-    return true;
+    m_started = false;
   }
 
-  bool IsStopped() { return m_stopped; }
+  bool IsStopped() const { return m_stopped; }
 
-private: 
+private:
   bool GuardFunction(
     const std::chrono::milliseconds timeout,
     const std::function<void(const std::string&)>& timeoutCallback)
-    {
-      TrueInScope toggle(m_started);
+  {
+    std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
 
-      m_log.Trace("Watchog waiting...", ILog::TraceLevel::Debug);
+    if (!m_condition.wait_for(lock, timeout, [this]()-> bool { return this->m_stopped; }))
+      timeoutCallback(m_id);
 
-      std::mutex mutex;
-      std::unique_lock<std::mutex> lock(mutex);
+    return m_stopped;
+  }
 
-      while(!IsStopped())
-      {
-        if (!m_condition.wait_for(lock, timeout, [this](){ return IsStopped();} ))
-        {
-          m_log.Trace("Watchog timeout", ILog::TraceLevel::Debug);
-          timeoutCallback(m_id);
-        }
-      }
-      
-      m_log.Trace("Watchog exit", ILog::TraceLevel::Debug);
-
-      return m_stopped;
-    }
-
-private: 
+private:
   std::string m_id;
 
   std::condition_variable m_condition;
@@ -132,20 +118,6 @@ private:
   std::atomic_bool m_stopped{ false };
 
   std::future<bool> m_guardFunctionResult;
-
-  Log m_log;
-
-private:
-  class TrueInScope
-  {
-    public:
-      TrueInScope(std::atomic_bool& variable) : m_variable(variable) { m_variable = true; }   
-      ~TrueInScope() { m_variable = false; }  
-
-    private:
-      std::atomic_bool& m_variable;
-  };
-
 };
 
 

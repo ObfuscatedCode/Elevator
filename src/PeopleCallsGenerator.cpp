@@ -47,13 +47,13 @@ void PeopleCallsGenerator::Shutdown()
   if (m_shutdownRequested || m_thread == nullptr)
     return;
   
-  m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
+  m_log.Trace("Shutdown in progress...", Log::TraceLevel::Verbose);
 
   const auto callback = std::bind(
-    [this](const std::string& id) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
+    [this](const std::string& /*id*/) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
     std::placeholders::_1);
 
-  Watchdog watchdog(m_log.GetTraceId(), 60s, callback);
+  Watchdog watchdog(m_log.GetTraceId(), 20s, callback);
   
   m_shutdownRequested = true;
 

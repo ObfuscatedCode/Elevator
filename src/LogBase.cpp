@@ -4,30 +4,31 @@
 #include "Configuration.h"
 
 #include <sstream>
+#include <utility>
 
-LogBase::TraceLevel LogBase::m_traceLevelFilter = Configuration::Log::TraceLevel;
+std::atomic_bool LogBase::m_started{ false };
 
 std::deque<std::shared_ptr<LogBase::TraceMessage>> LogBase::m_messageQueue;
-std::unique_ptr<std::mutex> LogBase::m_messageQueueMutex;
+std::unique_ptr<std::mutex> LogBase::m_messageQueueMutex{ std::make_unique<std::mutex>() };
 
-std::unique_ptr<std::condition_variable> LogBase::m_go;
-std::unique_ptr<std::mutex> LogBase::m_goMutex;
+std::unique_ptr<std::condition_variable> LogBase::m_go{ std::make_unique<std::condition_variable>() };
+std::unique_ptr<std::mutex> LogBase::m_goMutex{ std::make_unique<std::mutex>() };
 
-std::atomic_bool LogBase::m_working{false};
-std::atomic_bool LogBase::m_shutdownRequested{false};
+std::atomic_bool LogBase::m_working{ false };
+std::atomic_bool LogBase::m_shutdownRequested{ false };
+
+LogBase::TraceLevel LogBase::m_traceLevelFilter{ Configuration::Log::TraceLevel };
 
 std::unique_ptr<std::thread> LogBase::m_traceThread;
 
-LogBase::LogBase(const std::string& traceId)
+LogBase::LogBase(std::string traceId) : m_traceId(std::move(traceId))
 {
-  m_traceId = traceId;
-
   Start();
 }
 
 LogBase::~LogBase()
 {
-  Shutdown();
+  Stop();
 }
 
 void LogBase::Trace(const std::stringstream& message, const TraceLevel level, const std::string& messageSpecificId) const
@@ -42,43 +43,39 @@ void LogBase::Trace(const std::string& message, const TraceLevel level, const st
 
 void LogBase::Start()
 {
-  // NOTE: Order of creation is important
-  if (m_goMutex == nullptr)
-    m_goMutex = std::make_unique<std::mutex>();
-
-  if (m_go == nullptr)
-    m_go = std::make_unique<std::condition_variable>();
-
-  if (m_messageQueueMutex == nullptr)
-    m_messageQueueMutex = std::make_unique<std::mutex>();
+  if (m_started)
+    return; // already started
 
   if (m_traceThread == nullptr)
     m_traceThread = std::make_unique<std::thread>(&LogBase::TraceThreadFunction, this);
+
+  m_started = true;
 }
 
-void LogBase::Shutdown()
+void LogBase::Stop()
 {
+  if (!m_started)
+    return; // not started
+
   if (m_traceThread == nullptr || m_shutdownRequested)
     return;
 
   m_shutdownRequested = true;
-
-  const auto callback = std::bind(
-    [this](const std::string& id) -> void { Trace("** SHUTDOWN IS TAKING TOO LONG **", TraceLevel::Warning); },
-    std::placeholders::_1);
-
-  Watchdog watchdog("LogBase", 60s, callback);
+  m_go->notify_one();
 
   if (m_traceThread->joinable())
     m_traceThread->join();
 
-  watchdog.Stop();
-
   m_traceThread.reset();
+
+  m_started = false;
 }
 
 void LogBase::Enqueue(const std::shared_ptr<TraceMessage>& traceMessage)
 {
+  if (m_messageQueueMutex == nullptr || m_go == nullptr) // Preconditions
+    return;
+    
   std::lock_guard<std::mutex> lockMessageQueue(*m_messageQueueMutex);
   m_messageQueue.push_back(traceMessage);
 
@@ -87,15 +84,18 @@ void LogBase::Enqueue(const std::shared_ptr<TraceMessage>& traceMessage)
 
 void LogBase::TraceThreadFunction(LogBase* _this)
 {
+  if (m_messageQueueMutex == nullptr || m_go == nullptr) // Preconditions
+    return;
+
   m_working = true;
 
   do
   {
-    std::unique_lock<std::mutex> lock(*m_goMutex);
-    m_go->wait(lock);
-
     if (m_shutdownRequested)
       break;
+
+    std::unique_lock<std::mutex> lock(*m_goMutex);
+    m_go->wait(lock);
 
     while (!m_messageQueue.empty() && !m_shutdownRequested)
     {

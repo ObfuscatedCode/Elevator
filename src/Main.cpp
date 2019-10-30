@@ -39,5 +39,7 @@ int main()
     log.Trace(std::string("** CAUGHT EXCEPTION ** ") + e.what(), Log::TraceLevel::Error);
   }
 
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+
   return 0;
 }

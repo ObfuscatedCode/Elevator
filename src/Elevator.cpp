@@ -211,13 +211,13 @@ void Elevator::ShutDown()
   if (m_shutdownRequested || m_thread == nullptr)
     return;
 
-  m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
+  m_log.Trace("Shutdown in progress...", Log::TraceLevel::Verbose);
 
   const auto callback = std::bind(
     [this](const std::string&) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); }, 
     std::placeholders::_1);
 
-  Watchdog watchdog(m_name, 120s, callback);
+  Watchdog watchdog(m_name, 20s, callback);
 
   m_shutdownRequested = true;
   m_go.notify_one();
@@ -228,9 +228,9 @@ void Elevator::ShutDown()
   watchdog.Stop();
 
   m_thread.reset();
-  
+
   m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
-}
+ }
 
 void Elevator::SetId(std::string id)
 {

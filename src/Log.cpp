@@ -7,7 +7,7 @@ Log::Log(const std::string& traceId, const LogType logType)
   GetLog(traceId);
 }
 
-std::shared_ptr<ILog>& Log::GetLog(const std::string& traceId)
+std::shared_ptr<ILog>& Log::GetLog(const std::string& traceId) 
 {
   if (m_implementation == nullptr)
   {
@@ -48,7 +48,7 @@ void Log::SetTraceId(const std::string& traceId)
 const std::string& Log::GetTraceId() const
 {
   if (m_implementation == nullptr)
-    throw std::invalid_argument("Invalid pointer to log implementation");
+    throw std::invalid_argument("Invalid pointer to implementation");
 
   return m_implementation->GetTraceId();
 }
@@ -56,7 +56,7 @@ const std::string& Log::GetTraceId() const
 void Log::SetTraceLevelFilter(const TraceLevel startLevel)
 {
   if (m_implementation == nullptr)
-    throw std::invalid_argument("Invalid pointer to log implementation");
+    throw std::invalid_argument("Invalid pointer to implementation");
 
   m_implementation->SetTraceLevelFilter(startLevel);
 }

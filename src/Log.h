@@ -48,7 +48,7 @@ private:
   std::shared_ptr<ILog>& GetLog(const std::string& traceId);
 
 private:
-  std::shared_ptr<ILog> m_implementation{ nullptr };
+  std::shared_ptr<ILog> m_implementation;
   LogType m_logType{ LogType::Default };
 };
 
