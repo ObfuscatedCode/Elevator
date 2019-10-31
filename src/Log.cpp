@@ -27,13 +27,13 @@ std::shared_ptr<ILog>& Log::GetLog(const std::string& traceId)
   return m_implementation;
 }
 
-void Log::Trace(const std::stringstream& message, const TraceLevel level, const std::string& messageSpecificId) const
+void Log::Trace(const std::stringstream& message, const TraceLevel level, const std::string& messageSpecificId) 
 {
   if (m_implementation != nullptr)
     m_implementation->Trace(message, level, messageSpecificId);
 }
 
-void Log::Trace(const std::string& message, const TraceLevel level, const std::string& messageSpecificId) const
+void Log::Trace(const std::string& message, const TraceLevel level, const std::string& messageSpecificId) 
 {
   if (m_implementation != nullptr)
     m_implementation->Trace(message, level, messageSpecificId);

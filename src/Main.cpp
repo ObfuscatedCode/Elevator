@@ -10,7 +10,7 @@ using namespace Configuration::CallsGenerator;
 
 int main()
 {
-  const Log log;
+  Log log;
   log.Trace("Press Enter to stop...");
 
   try

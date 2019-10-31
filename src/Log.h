@@ -32,12 +32,12 @@ public:
   void Trace(
     const std::stringstream& message, 
     const TraceLevel level = TraceLevel::Info, 
-    const std::string& messageSpecificId = "") const override;
+    const std::string& messageSpecificId = "") override;
 
   void Trace(
     const std::string& message, 
     const TraceLevel level = TraceLevel::Info, 
-    const std::string& messageSpecificId = "") const override;
+    const std::string& messageSpecificId = "") override;
 
   void SetTraceId(const std::string& traceId) override;
   const std::string& GetTraceId() const override;

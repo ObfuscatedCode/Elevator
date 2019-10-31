@@ -80,5 +80,8 @@
     <ClInclude Include="src\Watchdog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\WorkerThread.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

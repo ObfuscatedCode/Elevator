@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "Log.h"
-
 #include <atomic>
 #include <chrono>
 #include <functional>

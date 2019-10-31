@@ -7,19 +7,27 @@
 
 #pragma once
 
-#include <mutex>
 #include <deque>
 #include <atomic>
-#include <condition_variable>
-#include <thread>
 
 #include "ILog.h"
+#include "WorkerThread.h"
 
 /**
- * \brief Implements the log basic producer/consumer logic with a message queue and a trace thread. 
+ * \brief Implements the log basic producer/consumer logic with a message queue and a trace thread.
  */
 class LogBase : public ILog
 {
+private:
+  class TraceThread final : public WorkerThread<LogBase>
+  {
+  public:
+    explicit TraceThread(LogBase* owner = nullptr) : WorkerThread<LogBase>(owner) {}
+
+  protected:
+    void CycleFunction(LogBase* _this) override;
+  };
+
 protected:
   struct TraceMessage
   {
@@ -27,9 +35,9 @@ protected:
     typedef std::chrono::time_point<Clock> TimeStamp;
 
     TraceMessage(
-      const std::string& message, 
-      const std::string& traceId, 
-      const TraceLevel level, 
+      const std::string& message,
+      const std::string& traceId,
+      const TraceLevel level,
       const TimeStamp& timeStamp = Clock::now())
     {
       m_string = message;
@@ -55,8 +63,8 @@ public:
   LogBase& operator=(LogBase&&) = delete;
 
 public: // ILog 
-  void Trace(const std::stringstream& message, const TraceLevel level = TraceLevel::Info, const std::string& messageSpecificId = "") const override;
-  void Trace(const std::string& message, const TraceLevel level = TraceLevel::Info, const std::string& messageSpecificId = "") const override;
+  void Trace(const std::stringstream& message, const TraceLevel level = TraceLevel::Info, const std::string& messageSpecificId = "") override;
+  void Trace(const std::string& message, const TraceLevel level = TraceLevel::Info, const std::string& messageSpecificId = "") override;
 
   void SetTraceId(const std::string& traceId) override { m_traceId = traceId; }
   const std::string& GetTraceId() const override { return m_traceId; }
@@ -64,31 +72,23 @@ public: // ILog
   void SetTraceLevelFilter(const TraceLevel traceLevelThreshold) override { m_traceLevelFilter = traceLevelThreshold; }
 
 private:
-  static void Enqueue(const std::shared_ptr<TraceMessage>& traceMessage);
-
-  void Start();
-  static void Stop();
-
-  static void TraceThreadFunction(LogBase* _this);
+  void Enqueue(const std::shared_ptr<TraceMessage>& traceMessage);
 
   virtual void LogFunction(const std::shared_ptr<TraceMessage>& message) = 0;
 
-private: 
+  std::unique_ptr<TraceThread>& GetThreadInstance();
+
+  static void AddRef() { ++m_refCount; }
+  static void Release() { --m_refCount; }
+
+private:
   static std::deque<std::shared_ptr<TraceMessage>> m_messageQueue;
   static std::unique_ptr<std::mutex> m_messageQueueMutex;
 
-  static std::unique_ptr <std::condition_variable> m_go;
-  static std::unique_ptr<std::mutex> m_goMutex;
-
-  static std::atomic_bool m_working;
-  static std::atomic_bool m_shutdownRequested;
-
-  static std::unique_ptr<std::thread> m_traceThread;
-
-  static std::atomic_bool m_started;
+  static std::atomic_uint m_refCount;
 
 protected:
-  std::string m_traceId;  
+  std::string m_traceId;
 
   static TraceLevel m_traceLevelFilter;
 };
