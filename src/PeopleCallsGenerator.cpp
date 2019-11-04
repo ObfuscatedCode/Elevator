@@ -16,6 +16,7 @@
 using namespace std::chrono_literals;
 using namespace Configuration::CallsGenerator;
 
+
 PeopleCallsGenerator::PeopleCallsGenerator(Management& management) : m_management(management)
 {
   m_log.SetTraceId("Generator");
@@ -28,48 +29,36 @@ PeopleCallsGenerator::~PeopleCallsGenerator()
 
 void PeopleCallsGenerator::StartRandom(const unsigned int numberOfCalls)
 {
-  if (m_working)
-    Shutdown();
+  if (m_generatorThread != nullptr && m_generatorThread->IsActive())
+    m_generatorThread->Stop();
 
-  m_thread = std::make_unique<std::thread>(&PeopleCallsGenerator::Random, this, numberOfCalls);
+  m_generatorThread = std::make_unique<RandomGeneratorThread>(this, numberOfCalls);
+  m_generatorThread->Start();
+  m_generatorThread->Go();
 }
 
 void PeopleCallsGenerator::StartFixed()
 {
-  if (m_working)
-    Shutdown();
+  if (m_generatorThread != nullptr && m_generatorThread->IsActive())
+    m_generatorThread->Stop();
 
-  m_thread = std::make_unique<std::thread>(&PeopleCallsGenerator::Fixed, this);
+  m_generatorThread = std::make_unique<FixedGeneratorThread>(this);
+  m_generatorThread->Start();
+  m_generatorThread->Go();
 }
 
 void PeopleCallsGenerator::Shutdown()
 {
-  if (m_shutdownRequested || m_thread == nullptr)
-    return;
-  
-  m_log.Trace("Shutdown in progress...", Log::TraceLevel::Verbose);
-
-  const auto callback = std::bind(
-    [this](const std::string& /*id*/) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
-    std::placeholders::_1);
-
-  Watchdog watchdog(m_log.GetTraceId(), 20s, callback);
-  
-  m_shutdownRequested = true;
-
-  if (m_thread->joinable())
-    m_thread->join();
-
-  watchdog.Stop();
-
-  m_thread.reset();  
+  if (m_generatorThread != nullptr && m_generatorThread->IsActive())
+    m_generatorThread->Stop();
 
   m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
 }
 
-void PeopleCallsGenerator::Random(const unsigned int numberOfCalls)
+void PeopleCallsGenerator::RandomGeneratorThread::CycleFunction(PeopleCallsGenerator* _this)
 {
-  m_working = true;
+  if (_this == nullptr)
+    return;
 
   std::this_thread::sleep_for(2s); // arbitrary delay before start
 
@@ -93,39 +82,39 @@ void PeopleCallsGenerator::Random(const unsigned int numberOfCalls)
       call = std::make_shared<Call>(getStartFloor(), getDestinationFloor());
     } while (!call->IsValid()); // only valid calls
 
-    m_log.Trace("Generated call " + call->ToString());
+    _this->m_log.Trace("Generated call " + call->ToString());
 
     const auto it = Floors::GetPeople().Insert(call);
 
     // Async assign request
-    auto handle = std::async(std::launch::async, [this, &it]() {m_management.AssignCall(*it); });
+    auto handle = std::async(std::launch::async, [_this, &it]() {_this->m_management.AssignCall(*it); });
 
     // Synch assign request
     //m_management.AssignCall(*it);
 
     ++numberOfGeneratedCalls;
-    if (numberOfCalls != EndlessCalls && numberOfGeneratedCalls >= numberOfCalls)
+    if (m_numberOfCalls != EndlessCalls && numberOfGeneratedCalls >= m_numberOfCalls)
       break;
 
     auto getDelay = std::bind(randomDelay, std::ref(generator));
     std::this_thread::sleep_for(std::chrono::milliseconds(getDelay()));
 
-  } while (!m_shutdownRequested);
+  } while (!StopRequested());
 
-  m_working = false;
-  m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
+  _this->m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
 }
 
-void PeopleCallsGenerator::Fixed()
+void PeopleCallsGenerator::FixedGeneratorThread::CycleFunction(PeopleCallsGenerator* _this)
 {
-  m_working = true;
+  if (_this == nullptr)
+    return;
 
   const auto seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
   std::default_random_engine generator(seed);
 
   const std::uniform_int_distribution<long long> randomDelay(MinDelayBetweenCalls, MaxDelayBetweenCalls);
 
-  std::this_thread::sleep_for(5s); // arbitrary delay before start
+  std::this_thread::sleep_for(2s); // arbitrary delay before start
 
   static constexpr auto topFloor = Floors::TopFloor; // workaround to avoid an obscure linking problem with g++
   static constexpr auto bottomFloor = Floors::BottomFloor;
@@ -161,12 +150,12 @@ void PeopleCallsGenerator::Fixed()
     if (!call->IsValid())
       continue;
 
-    m_log.Trace("Asking call assignment " + call->ToString());
+    _this->m_log.Trace("Asking call assignment " + call->ToString());
 
     const auto it = Floors::GetPeople().Insert(call);
 
     // Async assign request
-    auto handle = std::async(std::launch::async, [this, &it]() {m_management.AssignCall(*it); });
+    auto handle = std::async(std::launch::async, [_this, &it]() {_this->m_management.AssignCall(*it); });
 
     // Synch assign request
     //m_management.AssignCall(*it);
@@ -174,6 +163,5 @@ void PeopleCallsGenerator::Fixed()
     auto getDelay = std::bind(randomDelay, std::ref(generator));
     std::this_thread::sleep_for(std::chrono::milliseconds(getDelay()));
   }
-
-  m_working = false;
 }
+

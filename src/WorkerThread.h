@@ -12,6 +12,7 @@
 #include <memory>
 #include <atomic>
 #include <condition_variable>
+#include <cassert>
 
 /**
  * \brief Implements a thread which call a user defined function inside a cycle. 
@@ -27,7 +28,7 @@ public:
    */
   explicit WorkerThread(T* owner = nullptr) : m_owner{ owner } {}
 
-  virtual ~WorkerThread() { if (!StopRequested()) Stop(); }
+  virtual ~WorkerThread() { Stop(); }
 
   WorkerThread(const WorkerThread&) = delete;
   WorkerThread(WorkerThread&&) = delete;
@@ -37,12 +38,15 @@ public:
 
 public:
   /**
-   * \brief Start the thread in wait state.
+   * \brief Start the thread in wait state. 
    */
   void Start()
   {
     if (m_thread == nullptr)
       m_thread = std::make_unique<std::thread>([&]() {ThreadFunction(); });
+
+    while (!IsActive())
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   /**
@@ -67,6 +71,8 @@ public:
    */
   void Go()
   {
+    assert(IsActive() && "** THREAD NOT STARTED **"); // Thread started?
+
     m_stopWait = true;
     m_go.notify_one();
   }
