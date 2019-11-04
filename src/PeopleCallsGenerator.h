@@ -16,13 +16,12 @@ private:
   class RandomGeneratorThread final : public WorkerThread<PeopleCallsGenerator>
   {
   public:
-    explicit RandomGeneratorThread(PeopleCallsGenerator* owner, unsigned int numberOfCalls) :
-      WorkerThread<PeopleCallsGenerator>(owner), m_numberOfCalls(numberOfCalls)
-    {
-    }
+    explicit RandomGeneratorThread(PeopleCallsGenerator* peopleCallsGenerator, const unsigned int numberOfCalls) :
+      WorkerThread<PeopleCallsGenerator>(peopleCallsGenerator),
+      m_numberOfCalls(numberOfCalls) {}
 
   protected:
-    void CycleFunction(PeopleCallsGenerator* _this) override;
+    void CycleFunction(PeopleCallsGenerator* peopleCallsGenerator) override;
 
   private:
     unsigned int m_numberOfCalls = 0;
@@ -31,10 +30,11 @@ private:
   class FixedGeneratorThread final : public WorkerThread<PeopleCallsGenerator>
   {
   public:
-    explicit FixedGeneratorThread(PeopleCallsGenerator* owner = nullptr) : WorkerThread<PeopleCallsGenerator>(owner) {}
+    explicit FixedGeneratorThread(PeopleCallsGenerator* peopleCallsGenerator = nullptr) :
+      WorkerThread<PeopleCallsGenerator>(peopleCallsGenerator) {}
 
   protected:
-    void CycleFunction(PeopleCallsGenerator* _this) override;
+    void CycleFunction(PeopleCallsGenerator* peopleCallsGenerator) override;
   };
 
 public:

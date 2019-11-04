@@ -7,15 +7,14 @@
 
 #pragma once
 
-#include <thread>
 #include <mutex>
 #include <chrono>
 #include <string>
-#include <atomic>
 #include <condition_variable>
 
 #include "Floors.h"
 #include "People.h"
+#include "WorkerThread.h"
 
 using namespace std::chrono_literals;
 
@@ -36,6 +35,15 @@ enum class DoorsStatus
 
 class Elevator final 
 {
+  class ElevatorThread final : public WorkerThread<Elevator>
+  {
+  public:
+    explicit ElevatorThread(Elevator* elevator = nullptr) : WorkerThread<Elevator>(elevator) { }
+
+  protected:
+    void CycleFunction(Elevator* elevator) override;
+  };
+
 public:
   explicit Elevator(const std::string& id = "");
 
@@ -48,7 +56,7 @@ public:
   Elevator& operator=(Elevator&& other) noexcept = delete;
   
 public:
-  bool Available(const std::shared_ptr<Call>& call);
+  bool Available(const std::shared_ptr<Call>& call) const;
   bool AnswerToCall(const std::shared_ptr<Call>& call);
 
   void ShutDown();
@@ -73,9 +81,6 @@ private:
   void RestoreDestinationStops();
 
 private:
-  void ElevatorThreadFunction();
-
-private:
   Floors::FloorNumber m_currentFloor = 0;
   Floors m_floors;
 
@@ -86,17 +91,13 @@ private:
 
   DoorsStatus m_doorsStatus = DoorsStatus::Closed;
 
-  std::mutex m_mutex;
-
   std::condition_variable m_go;
   std::mutex m_goMutex;
 
   std::string m_elevatorId = "?";
   std::string m_name;
 
-  std::unique_ptr<std::thread> m_thread;
-  std::atomic_bool m_shutdownRequested{ false };
-  std::atomic_bool m_working{ false};
+  std::unique_ptr<ElevatorThread> m_thread;
 
   Log m_log;
 };

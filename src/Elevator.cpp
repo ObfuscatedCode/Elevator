@@ -9,7 +9,9 @@ Elevator::Elevator(const std::string& id)
 {
   SetId(id);
 
-  m_thread = std::make_unique<std::thread>(&Elevator::ElevatorThreadFunction, this);
+  m_thread = std::make_unique<ElevatorThread>(this);
+  m_thread->Start();
+  m_thread->Go();
 }
 
 Elevator::~Elevator()
@@ -46,51 +48,52 @@ bool Elevator::AnswerToCall(const std::shared_ptr<Call>& call)
   return true;
 }
 
-void Elevator::ElevatorThreadFunction()
+void Elevator::ElevatorThread::CycleFunction(Elevator* elevator)
 {
-  m_log.Trace("Working", Log::TraceLevel::Verbose);
-  m_working = true;
+  if (elevator == nullptr)
+    return;
+
+  elevator->m_log.Trace("Working", Log::TraceLevel::Verbose);
 
   do
   {
-    CloseDoors();
-    m_log.Trace("Waiting...");
+    elevator->CloseDoors();
+    elevator->m_log.Trace("Waiting...");
 
-    if (!m_people.Empty())
-      m_log.Trace("** ERROR ** The elevator is in idle but there are still people inside", Log::TraceLevel::Error);
+    if (!elevator->m_people.Empty())
+      elevator->m_log.Trace("** ERROR ** The elevator is in idle but there are still people inside", Log::TraceLevel::Error);
 
-    if (m_shutdownRequested)
+    if (StopRequested())
       break;
 
-    std::unique_lock<std::mutex> lock(m_goMutex);
-    m_go.wait(lock);
+    std::unique_lock<std::mutex> lock(elevator->m_goMutex);
+    elevator->m_go.wait(lock);
 
-    auto nextFloor = m_floors.GetNextStop(m_currentFloor, m_currentDirection);
+    auto nextFloor = elevator->m_floors.GetNextStop(elevator->m_currentFloor, elevator->m_currentDirection);
 
-    while (Floors::IsValid(nextFloor) && !m_shutdownRequested) // continue until there are stops in current direction and shutdown is not requested
+    while (Floors::IsValid(nextFloor) && !StopRequested()) // continue until there are stops in current direction and shutdown is not requested
     {
-      m_log.Trace(m_currentDirection == Direction::Up ? "Current direction: UP" : "Current direction: DOWN");
+      elevator->m_log.Trace(elevator->m_currentDirection == Direction::Up ? "Current direction: UP" : "Current direction: DOWN");
 
-      if(nextFloor != m_currentFloor)
+      if(nextFloor != elevator->m_currentFloor)
       {
-        Move(nextFloor);
+        elevator->Move(nextFloor);
       }
       else
       {
-        m_floors.ClearStop(m_currentFloor, m_currentDirection);
+        elevator->m_floors.ClearStop(elevator->m_currentFloor, elevator->m_currentDirection);
       }
         
-      PeopleEnterAndExit();
+      elevator->PeopleEnterAndExit();
       
-      nextFloor = m_floors.GetNextStop(m_currentFloor, m_currentDirection);
+      nextFloor = elevator->m_floors.GetNextStop(elevator->m_currentFloor, elevator->m_currentDirection);
     }
 
-    m_currentDirection = Direction::None;
+    elevator->m_currentDirection = Direction::None;
   }
-  while (!m_shutdownRequested);
+  while (!StopRequested());
 
-  m_working = false;
-  m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
+  elevator->m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
 }
 
 bool Elevator::OpenDoors()
@@ -196,7 +199,7 @@ void Elevator::Move(const Floors::FloorNumber requestedFloor)
         --m_currentFloor;
       }
 
-    } while (m_currentFloor != requestedFloor && !m_shutdownRequested);
+    } while (m_currentFloor != requestedFloor && !m_thread->StopRequested());
 
     const std::string message = "Arrived on the floor " + std::to_string(m_currentFloor);
     m_log.Trace(message);
@@ -208,25 +211,14 @@ void Elevator::Move(const Floors::FloorNumber requestedFloor)
 
 void Elevator::ShutDown()
 {
-  if (m_shutdownRequested || m_thread == nullptr)
+  if (m_thread == nullptr || m_thread->StopRequested())
     return;
 
   m_log.Trace("Shutdown in progress...", Log::TraceLevel::Verbose);
 
-  const auto callback = std::bind(
-    [this](const std::string&) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); }, 
-    std::placeholders::_1);
-
-  Watchdog watchdog(m_name, 20s, callback);
-
-  m_shutdownRequested = true;
   m_go.notify_one();
 
-  if (m_thread->joinable())
-    m_thread->join();
-
-  watchdog.Stop();
-
+  m_thread->Stop();
   m_thread.reset();
 
   m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
@@ -242,10 +234,8 @@ void Elevator::SetId(std::string id)
   m_log.SetTraceId(m_name);
 }
 
-bool Elevator::Available(const std::shared_ptr<Call>& call)
+bool Elevator::Available(const std::shared_ptr<Call>& call) const
 {
-  std::lock_guard<std::mutex> lock(m_mutex);
-
   if (!call->IsValid())
     return false;
 

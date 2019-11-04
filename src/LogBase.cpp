@@ -55,7 +55,7 @@ std::unique_ptr<LogBase::TraceThread>& LogBase::GetThreadInstance()
   return thread;
 }
 
-void LogBase::TraceThread::CycleFunction(LogBase* _this)
+void LogBase::TraceThread::CycleFunction(LogBase* logBase)
 {
   while (!m_messageQueue.empty() && !StopRequested())
   {
@@ -64,7 +64,7 @@ void LogBase::TraceThread::CycleFunction(LogBase* _this)
     const auto message = std::move(m_messageQueue.front());
     m_messageQueue.pop_front();
 
-    if(_this != nullptr)
-      _this->LogFunction(message);
+    if(logBase != nullptr)
+      logBase->LogFunction(message);
   }
 }

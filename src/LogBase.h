@@ -22,10 +22,10 @@ private:
   class TraceThread final : public WorkerThread<LogBase>
   {
   public:
-    explicit TraceThread(LogBase* owner = nullptr) : WorkerThread<LogBase>(owner) {}
+    explicit TraceThread(LogBase* logBase = nullptr) : WorkerThread<LogBase>(logBase) {}
 
   protected:
-    void CycleFunction(LogBase* _this) override;
+    void CycleFunction(LogBase* logBase) override;
   };
 
 protected:

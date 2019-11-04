@@ -116,7 +116,8 @@ private:
         m_stopWait = false;
       }
 
-      CycleFunction(m_owner);
+      if (!StopRequested())
+        CycleFunction(m_owner);
 
     } while (!StopRequested());
   }

@@ -55,9 +55,9 @@ void PeopleCallsGenerator::Shutdown()
   m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
 }
 
-void PeopleCallsGenerator::RandomGeneratorThread::CycleFunction(PeopleCallsGenerator* _this)
+void PeopleCallsGenerator::RandomGeneratorThread::CycleFunction(PeopleCallsGenerator* peopleCallsGenerator)
 {
-  if (_this == nullptr)
+  if (peopleCallsGenerator == nullptr || StopRequested())
     return;
 
   std::this_thread::sleep_for(2s); // arbitrary delay before start
@@ -82,12 +82,12 @@ void PeopleCallsGenerator::RandomGeneratorThread::CycleFunction(PeopleCallsGener
       call = std::make_shared<Call>(getStartFloor(), getDestinationFloor());
     } while (!call->IsValid()); // only valid calls
 
-    _this->m_log.Trace("Generated call " + call->ToString());
+    peopleCallsGenerator->m_log.Trace("Generated call " + call->ToString());
 
     const auto it = Floors::GetPeople().Insert(call);
 
     // Async assign request
-    auto handle = std::async(std::launch::async, [_this, &it]() {_this->m_management.AssignCall(*it); });
+    auto handle = std::async(std::launch::async, [peopleCallsGenerator, &it]() {peopleCallsGenerator->m_management.AssignCall(*it); });
 
     // Synch assign request
     //m_management.AssignCall(*it);
@@ -101,12 +101,12 @@ void PeopleCallsGenerator::RandomGeneratorThread::CycleFunction(PeopleCallsGener
 
   } while (!StopRequested());
 
-  _this->m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
+  peopleCallsGenerator->m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
 }
 
-void PeopleCallsGenerator::FixedGeneratorThread::CycleFunction(PeopleCallsGenerator* _this)
+void PeopleCallsGenerator::FixedGeneratorThread::CycleFunction(PeopleCallsGenerator* peopleCallsGenerator)
 {
-  if (_this == nullptr)
+  if (peopleCallsGenerator == nullptr)
     return;
 
   const auto seed = static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
@@ -150,12 +150,12 @@ void PeopleCallsGenerator::FixedGeneratorThread::CycleFunction(PeopleCallsGenera
     if (!call->IsValid())
       continue;
 
-    _this->m_log.Trace("Asking call assignment " + call->ToString());
+    peopleCallsGenerator->m_log.Trace("Asking call assignment " + call->ToString());
 
     const auto it = Floors::GetPeople().Insert(call);
 
     // Async assign request
-    auto handle = std::async(std::launch::async, [_this, &it]() {_this->m_management.AssignCall(*it); });
+    auto handle = std::async(std::launch::async, [peopleCallsGenerator, &it]() {peopleCallsGenerator->m_management.AssignCall(*it); });
 
     // Synch assign request
     //m_management.AssignCall(*it);
