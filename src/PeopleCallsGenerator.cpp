@@ -49,8 +49,11 @@ void PeopleCallsGenerator::StartFixed()
 
 void PeopleCallsGenerator::Shutdown()
 {
-  if (m_generatorThread != nullptr && m_generatorThread->IsActive())
-    m_generatorThread->Stop();
+  if (m_generatorThread == nullptr)
+    return;
+
+  m_generatorThread->Stop();
+  m_generatorThread.reset();
 
   m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
 }
