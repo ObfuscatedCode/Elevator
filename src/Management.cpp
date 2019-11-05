@@ -25,7 +25,10 @@ Management::~Management()
 
 void Management::Shutdown()
 {
-  m_log.Trace("Shutdown requested...", Log::TraceLevel::Verbose);
+  if (m_elevators.empty())
+    return;
+
+  m_log.Trace("Shutdown in progress...", Log::TraceLevel::Verbose);
 
   for (auto& elevator : m_elevators)
     elevator->ShutDown();
@@ -66,7 +69,7 @@ bool Management::AssignCall(std::shared_ptr<Call>& call)
 
   if (!callAssigned)
   {
-    m_log.Trace("Forced assignation for call " + call->ToString(), Log::TraceLevel::Warning);
+    m_log.Trace("FORCED ASSIGNATION FOR CALL " + call->ToString(), Log::TraceLevel::Warning);
    assignCall(*m_elevators.begin());
   }
 

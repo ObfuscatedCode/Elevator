@@ -27,7 +27,7 @@ struct ILog
   virtual void Trace(
     const std::stringstream& message, 
     const TraceLevel level = TraceLevel::Info, 
-    const std::string& messageSpecificId = "") const = 0;
+    const std::string& messageSpecificId = "") = 0;
 
   /**
    * \brief Trace a message on the standard output.
@@ -38,7 +38,7 @@ struct ILog
   virtual void Trace(
     const std::string& message, 
     const TraceLevel level = TraceLevel::Info, 
-    const std::string& messageSpecificId = "") const = 0;
+    const std::string& messageSpecificId = "") = 0;
 
   /**
    * \brief Trace a message on the standard output.

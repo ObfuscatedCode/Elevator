@@ -8,13 +8,35 @@
 #pragma once
 
 #include "Log.h"
-
-#include <atomic>
-#include <thread>
-#include <memory>
+#include "WorkerThread.h"
 
 class PeopleCallsGenerator final 
 {
+private:
+  class RandomGeneratorThread final : public WorkerThread<PeopleCallsGenerator>
+  {
+  public:
+    explicit RandomGeneratorThread(PeopleCallsGenerator* peopleCallsGenerator, const unsigned int numberOfCalls) :
+      WorkerThread<PeopleCallsGenerator>(peopleCallsGenerator),
+      m_numberOfCalls(numberOfCalls) {}
+
+  protected:
+    void CycleFunction(PeopleCallsGenerator* peopleCallsGenerator) override;
+
+  private:
+    unsigned int m_numberOfCalls = 0;
+  };
+
+  class FixedGeneratorThread final : public WorkerThread<PeopleCallsGenerator>
+  {
+  public:
+    explicit FixedGeneratorThread(PeopleCallsGenerator* peopleCallsGenerator = nullptr) :
+      WorkerThread<PeopleCallsGenerator>(peopleCallsGenerator) {}
+
+  protected:
+    void CycleFunction(PeopleCallsGenerator* peopleCallsGenerator) override;
+  };
+
 public:
   explicit PeopleCallsGenerator(class Management& management);
   PeopleCallsGenerator() = delete;
@@ -34,26 +56,11 @@ public:
   void Shutdown();
 
 private:
-
-  /**
-   * \brief Generate random calls with random frequency within the configuration bounds.  
-   * \param numberOfCalls Number of calls to generate, if set to 'Endless' (see Configuration) generate infinite calls.
-   */
-  void Random(const unsigned int numberOfCalls);
-
-  /**
-   * \brief Generate a fixed list of calls useful for test and debug purposes. 
-   */
-  void Fixed();
-
-private:
   class Management& m_management;
 
-  std::unique_ptr<std::thread> m_thread;
-  std::atomic_bool m_shutdownRequested{false};
-  std::atomic_bool m_working{false};
-
   Log m_log;
+
+  std::unique_ptr<WorkerThread<PeopleCallsGenerator>> m_generatorThread;
 };
 
 

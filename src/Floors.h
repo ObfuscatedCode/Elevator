@@ -45,7 +45,7 @@ public:
 
   FloorNumber GetNextStop(const FloorNumber currentFloor, Direction& currentDirection);
 
-  static class People& GetPeople() { return m_people; }
+  static class People& GetPeople();
 
   void Trace(const FloorNumber currentFloor);
 
@@ -56,7 +56,6 @@ private:
   FloorNumber Search(const FloorNumber startFloor, const Direction direction);
 
 private:
-  static class People m_people;
   FloorStops m_stops;
 
   std::mutex m_mutex;

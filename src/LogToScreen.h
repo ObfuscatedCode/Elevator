@@ -18,11 +18,11 @@ public:
   explicit LogToScreen(const std::string& traceId = "");
   virtual ~LogToScreen() = default;
 
-  LogToScreen(const LogToScreen&) = default;
-  LogToScreen(LogToScreen&&) = default;
+  LogToScreen(const LogToScreen&) = delete;
+  LogToScreen(LogToScreen&&) = delete;
 
-  LogToScreen& operator=(const LogToScreen&) = default;
-  LogToScreen& operator=(LogToScreen&&) = default;
+  LogToScreen& operator=(const LogToScreen&) = delete;
+  LogToScreen& operator=(LogToScreen&&) = delete;
 
 private:
   void LogFunction(const std::shared_ptr<TraceMessage>& message) override;

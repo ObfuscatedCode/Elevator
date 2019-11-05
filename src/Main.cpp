@@ -10,7 +10,7 @@ using namespace Configuration::CallsGenerator;
 
 int main()
 {
-  const Log log;
+  Log log;
   log.Trace("Press Enter to stop...");
 
   try
@@ -38,6 +38,8 @@ int main()
   {
     log.Trace(std::string("** CAUGHT EXCEPTION ** ") + e.what(), Log::TraceLevel::Error);
   }
+
+  std::this_thread::sleep_for(std::chrono::seconds(10));
 
   return 0;
 }

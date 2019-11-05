@@ -34,7 +34,7 @@ enum class DoorsStatus
 };
 
 
-class Elevator final 
+class Elevator final
 {
 public:
   explicit Elevator(const std::string& id = "");
@@ -46,9 +46,9 @@ public:
 
   Elevator& operator=(const Elevator&) = delete;
   Elevator& operator=(Elevator&& other) noexcept = delete;
-  
+
 public:
-  bool Available(const std::shared_ptr<Call>& call);
+  bool Available(const std::shared_ptr<Call>& call) const;
   bool AnswerToCall(const std::shared_ptr<Call>& call);
 
   void ShutDown();
@@ -86,8 +86,6 @@ private:
 
   DoorsStatus m_doorsStatus = DoorsStatus::Closed;
 
-  std::mutex m_mutex;
-
   std::condition_variable m_go;
   std::mutex m_goMutex;
 
@@ -96,7 +94,7 @@ private:
 
   std::unique_ptr<std::thread> m_thread;
   std::atomic_bool m_shutdownRequested{ false };
-  std::atomic_bool m_working{ false};
+  std::atomic_bool m_working{ false };
 
   Log m_log;
 };

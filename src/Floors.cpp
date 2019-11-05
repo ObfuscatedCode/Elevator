@@ -7,7 +7,6 @@
 #include "People.h"
 #include "Log.h"
 
-People Floors::m_people("Building");
 
 Floors::Floors()
 {
@@ -87,6 +86,12 @@ Floors::FloorNumber Floors::GetNextStop(const FloorNumber currentFloor, Directio
   m_log.Trace(std::string("GetNextStop ") + std::to_string(currentFloor), Log::TraceLevel::Debug);
   
   return nextStop;
+}
+
+People& Floors::GetPeople()
+{
+  static People people("Building");
+  return people;
 }
 
 Floors::FloorNumber Floors::Search(const FloorNumber startFloor, const Direction direction)
