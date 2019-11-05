@@ -104,7 +104,7 @@ void PeopleCallsGenerator::RandomGeneratorThread::CycleFunction(PeopleCallsGener
 
   } while (!StopRequested());
 
-  peopleCallsGenerator->m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
+  peopleCallsGenerator->m_log.Trace("CycleFunction exit", ILog::TraceLevel::Debug);
 }
 
 void PeopleCallsGenerator::FixedGeneratorThread::CycleFunction(PeopleCallsGenerator* peopleCallsGenerator)

@@ -1,7 +1,7 @@
 /**********************************************************************************
 *        File: WorkerThread.h
 * Description: Implements a thread which call a user defined function inside a cycle 
-*              and the function to control it.
+*              and the methods to control it.
 *      Author: Emanuele Merlo (emanuele.merlo@gmail.com)
 *       Notes:
 **********************************************************************************/

@@ -9,9 +9,7 @@ Elevator::Elevator(const std::string& id)
 {
   SetId(id);
 
-  m_thread = std::make_unique<ElevatorThread>(this);
-  m_thread->Start();
-  m_thread->Go();
+  m_thread = std::make_unique<std::thread>(&Elevator::ElevatorThreadFunction, this);
 }
 
 Elevator::~Elevator()
@@ -34,7 +32,7 @@ bool Elevator::AnswerToCall(const std::shared_ptr<Call>& call)
 
   if (!call->IsValid())
   {
-    m_log.Trace("*** Invalid call ***", Log::TraceLevel::Warning);
+    m_log.Trace("*** INVALID CALL ***", Log::TraceLevel::Warning);
     return false;
   }
 
@@ -48,52 +46,50 @@ bool Elevator::AnswerToCall(const std::shared_ptr<Call>& call)
   return true;
 }
 
-void Elevator::ElevatorThread::CycleFunction(Elevator* elevator)
+void Elevator::ElevatorThreadFunction()
 {
-  if (elevator == nullptr)
-    return;
-
-  elevator->m_log.Trace("Working", Log::TraceLevel::Verbose);
+  m_log.Trace("Working", Log::TraceLevel::Verbose);
+  m_working = true;
 
   do
   {
-    elevator->CloseDoors();
-    elevator->m_log.Trace("Waiting...");
+    CloseDoors();
+    m_log.Trace("Waiting...");
 
-    if (!elevator->m_people.Empty())
-      elevator->m_log.Trace("** ERROR ** The elevator is in idle but there are still people inside", Log::TraceLevel::Error);
+    if (!m_people.Empty())
+      m_log.Trace("** ERROR ** The elevator is in idle but there are still people inside", Log::TraceLevel::Error);
 
-    if (StopRequested())
+    if (m_shutdownRequested)
       break;
 
-    std::unique_lock<std::mutex> lock(elevator->m_goMutex);
-    elevator->m_go.wait(lock);
+    std::unique_lock<std::mutex> lock(m_goMutex);
+    m_go.wait(lock);
 
-    auto nextFloor = elevator->m_floors.GetNextStop(elevator->m_currentFloor, elevator->m_currentDirection);
+    auto nextFloor = m_floors.GetNextStop(m_currentFloor, m_currentDirection);
 
-    while (Floors::IsValid(nextFloor) && !StopRequested()) // continue until there are stops in current direction and shutdown is not requested
+    while (Floors::IsValid(nextFloor) && !m_shutdownRequested) // continue until there are stops in current direction and shutdown is not requested
     {
-      elevator->m_log.Trace(elevator->m_currentDirection == Direction::Up ? "Current direction: UP" : "Current direction: DOWN");
+      m_log.Trace(m_currentDirection == Direction::Up ? "Current direction: UP" : "Current direction: DOWN");
 
-      if(nextFloor != elevator->m_currentFloor)
+      if (nextFloor != m_currentFloor)
       {
-        elevator->Move(nextFloor);
+        Move(nextFloor);
       }
       else
       {
-        elevator->m_floors.ClearStop(elevator->m_currentFloor, elevator->m_currentDirection);
+        m_floors.ClearStop(m_currentFloor, m_currentDirection);
       }
-        
-      elevator->PeopleEnterAndExit();
-      
-      nextFloor = elevator->m_floors.GetNextStop(elevator->m_currentFloor, elevator->m_currentDirection);
+
+      PeopleEnterAndExit();
+
+      nextFloor = m_floors.GetNextStop(m_currentFloor, m_currentDirection);
     }
 
-    elevator->m_currentDirection = Direction::None;
-  }
-  while (!StopRequested());
+    m_currentDirection = Direction::None;
+  } while (!m_shutdownRequested);
 
-  elevator->m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
+  m_working = false;
+  m_log.Trace("Thread exit", ILog::TraceLevel::Debug);
 }
 
 bool Elevator::OpenDoors()
@@ -149,7 +145,7 @@ void Elevator::PeopleEnterAndExit()
 }
 
 /**
- * \brief This function ensures that every time a person (call) enters the elevator, 
+ * \brief This function ensures that every time a person (call) enters the elevator,
  * the destination is correctly (re)set in the floors stops array.
  */
 void Elevator::RestoreDestinationStops()
@@ -166,7 +162,7 @@ void Elevator::RestoreDestinationStops()
   // but this is the simplest solution.
 
   // Refresh the stops based on the people inside
-  for (auto& person : m_people.GetList()) 
+  for (auto& person : m_people.GetList())
   {
     if (person->GetDestinationFloor() != m_currentFloor)
     {
@@ -189,17 +185,17 @@ void Elevator::Move(const Floors::FloorNumber requestedFloor)
       if (requestedFloor > m_currentFloor && m_currentFloor < Floors::TopFloor)
       {
         m_log.Trace("Moving Up [" + std::to_string(m_currentFloor) + "]", Log::TraceLevel::Verbose);
-        std::this_thread::sleep_for(TimeToReachTheNextFloor); 
-        ++m_currentFloor;        
+        std::this_thread::sleep_for(TimeToReachTheNextFloor);
+        ++m_currentFloor;
       }
       else if (requestedFloor < m_currentFloor && m_currentFloor > 0)
       {
         m_log.Trace("Moving Down [" + std::to_string(m_currentFloor) + "]", Log::TraceLevel::Verbose);
-        std::this_thread::sleep_for(TimeToReachTheNextFloor); 
+        std::this_thread::sleep_for(TimeToReachTheNextFloor);
         --m_currentFloor;
       }
 
-    } while (m_currentFloor != requestedFloor && !m_thread->StopRequested());
+    } while (m_currentFloor != requestedFloor && !m_shutdownRequested);
 
     const std::string message = "Arrived on the floor " + std::to_string(m_currentFloor);
     m_log.Trace(message);
@@ -211,18 +207,29 @@ void Elevator::Move(const Floors::FloorNumber requestedFloor)
 
 void Elevator::ShutDown()
 {
-  if (m_thread == nullptr || m_thread->StopRequested())
+  if (m_shutdownRequested || m_thread == nullptr)
     return;
 
   m_log.Trace("Shutdown in progress...", Log::TraceLevel::Verbose);
 
+  const auto callback = std::bind(
+    [this](const std::string&) -> void { m_log.Trace("** SHUTDOWN IS TAKING TOO LONG **", ILog::TraceLevel::Warning); },
+    std::placeholders::_1);
+
+  Watchdog watchdog(m_name, 20s, callback);
+
+  m_shutdownRequested = true;
   m_go.notify_one();
 
-  m_thread->Stop();
+  if (m_thread->joinable())
+    m_thread->join();
+
+  watchdog.Stop();
+
   m_thread.reset();
 
   m_log.Trace("Shutdown completed", Log::TraceLevel::Verbose);
- }
+}
 
 void Elevator::SetId(std::string id)
 {
@@ -245,9 +252,9 @@ bool Elevator::Available(const std::shared_ptr<Call>& call) const
   if (m_status == ElevatorStatus::Idle || m_currentDirection == Direction::None)
     return true;
 
-  if (call->GetDirection() == m_currentDirection  && m_currentDirection == Direction::Up && call->GetStartFloor() > m_currentFloor)
+  if (call->GetDirection() == m_currentDirection && m_currentDirection == Direction::Up && call->GetStartFloor() > m_currentFloor)
     return true;
-  
+
   if (call->GetDirection() == m_currentDirection && m_currentDirection == Direction::Down && call->GetStartFloor() < m_currentFloor)
     return true;
 

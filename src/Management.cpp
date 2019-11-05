@@ -69,7 +69,7 @@ bool Management::AssignCall(std::shared_ptr<Call>& call)
 
   if (!callAssigned)
   {
-    m_log.Trace("Forced assignation for call " + call->ToString(), Log::TraceLevel::Warning);
+    m_log.Trace("FORCED ASSIGNATION FOR CALL " + call->ToString(), Log::TraceLevel::Warning);
    assignCall(*m_elevators.begin());
   }
 
