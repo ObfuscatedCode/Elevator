@@ -11,5 +11,7 @@ This is a Windows/Linux multiplatform project.
 
 Possible future improvements:
 - Unit and integration tests
+- Configuration from file
 - Statistics
 - GUI
+- Log to file
