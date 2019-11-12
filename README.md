@@ -8,3 +8,8 @@ The simulated model requires the user to call the elevator by simply selecting t
 "Elevator" is intended as an educational project, it was a small gym to practice with threading, synchronization, collections and modeling.
 
 This is a Windows/Linux multiplatform project.
+
+Possible future improvements:
+- Unit and integration tests
+- Statistics
+- GUI

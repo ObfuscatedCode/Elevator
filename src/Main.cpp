@@ -30,6 +30,7 @@ int main()
     }
 
     std::cin.get();
+    log.Trace("Shutdown requested...");
 
     callsGenerator.Shutdown();
     elevatorsManagement.Shutdown();
